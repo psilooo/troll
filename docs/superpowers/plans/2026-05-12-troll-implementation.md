@@ -247,7 +247,7 @@ Static markup matching the DOM structure in the spec. Use a placeholder Blob ori
   <title>troll</title>
   <!-- Preconnect warms TCP/TLS to the Blob CDN before <video> ranges fetch.
        Update the href once the Blob store URL is known. -->
-  <link rel="preconnect" href="https://example.public.blob.vercel-storage.com" crossorigin>
+  <link rel="preconnect" href="https://example.public.blob.vercel-storage.com">
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
@@ -796,13 +796,13 @@ const VIDEOS = {
 Open `index.html`. Replace:
 
 ```html
-<link rel="preconnect" href="https://example.public.blob.vercel-storage.com" crossorigin>
+<link rel="preconnect" href="https://example.public.blob.vercel-storage.com">
 ```
 
 with the actual Blob origin from your store (everything up to and including `.public.blob.vercel-storage.com`, no path):
 
 ```html
-<link rel="preconnect" href="https://<store-id>.public.blob.vercel-storage.com" crossorigin>
+<link rel="preconnect" href="https://<store-id>.public.blob.vercel-storage.com">
 ```
 
 - [ ] **Step 8: Commit**

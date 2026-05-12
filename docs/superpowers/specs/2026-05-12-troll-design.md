@@ -127,7 +127,7 @@ Stacking order is set by explicit `z-index` (see CSS contract below), not DOM or
 
 The crossfade is implemented by transitioning `#loop`'s opacity from 1 → 0, revealing `#reveal` (which has already started playing) underneath. Single opacity transition, no double-tween.
 
-A `<link rel="preconnect" href="https://<store-id>.public.blob.vercel-storage.com">` in `<head>` warms the TCP/TLS handshake to the Blob CDN before the `<video>` elements begin their range requests. (We do not use `<link rel="preload" as="video">` — that `as` value is not in the documented preload destination list and is at best ignored, at worst duplicates bytes. `<video preload="auto">` is the canonical way to preload video.)
+A `<link rel="preconnect" href="https://<store-id>.public.blob.vercel-storage.com">` in `<head>` warms the TCP/TLS handshake to the Blob CDN before the `<video>` elements begin their range requests. The preconnect intentionally omits `crossorigin`: the `<video>` elements have no `crossorigin` attribute, so they issue no-CORS range requests. Browsers keep separate connection pools per CORS mode, so a `crossorigin` preconnect would warm a connection the videos can't reuse — the optimization would silently no-op. Match the request mode and the warmed connection gets reused. (We also do not use `<link rel="preload" as="video">` — that `as` value is not in the documented preload destination list and is at best ignored, at worst duplicates bytes. `<video preload="auto">` is the canonical way to preload video.)
 
 ## Styling contract
 
