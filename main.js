@@ -104,28 +104,45 @@ function initExperience() {
     startReveal();
   }
 
+  // Transition between videos with an eyelid blink. CSS animates the
+  // `.eyelids-shut` class — close fast (120ms), held shut briefly (50ms),
+  // open slower (220ms). While covered, swap what sits underneath.
+  const BLINK_HELD_SHUT_MS = 170; // close + held → eyes fully covered
+
   function startReveal() {
     state = STATE.REVEAL;
-    reveal.play()
-      .then(() => {
-        // Normal path: fade the loop out, reveal plays underneath.
-        loop.style.opacity = '0';
-      })
-      .catch(() => {
-        // Autoplay blocked even for muted — skip the reveal entirely so the
-        // user doesn't get stuck on a frozen first frame. Hide reveal
-        // immediately (no transition) so its frozen frame can't show through
-        // the loop's fade; then fade only the loop to expose #white.
-        reveal.style.display = 'none';
-        loop.style.opacity = '0';
-        state = STATE.WHITE;
-      });
+    document.body.classList.add('eyelids-shut');
+    setTimeout(() => {
+      // Eyes are fully closed. Hide the loop with no transition so when
+      // the eyelids retract, we see the reveal underneath, not the loop.
+      loop.style.transition = 'none';
+      loop.style.opacity = '0';
+      reveal.play()
+        .then(() => {
+          // Reveal is playing — eyes opening in 220ms will expose it.
+        })
+        .catch(() => {
+          // Autoplay blocked even muted — hide reveal too so eyes open
+          // straight onto #white (z-index 1) rather than a frozen frame.
+          reveal.style.display = 'none';
+          state = STATE.WHITE;
+        });
+      // Open eyelids (the default transition in CSS handles the easing).
+      document.body.classList.remove('eyelids-shut');
+    }, BLINK_HELD_SHUT_MS);
   }
 
+  // End of reveal → WHITE. Also a blink, for visual cohesion with the
+  // click transition: close eyelids, hide reveal underneath, open onto #white.
   reveal.addEventListener('ended', () => {
     if (state !== STATE.REVEAL) return;
     state = STATE.WHITE;
-    reveal.style.opacity = '0';
+    document.body.classList.add('eyelids-shut');
+    setTimeout(() => {
+      reveal.style.transition = 'none';
+      reveal.style.opacity = '0';
+      document.body.classList.remove('eyelids-shut');
+    }, BLINK_HELD_SHUT_MS);
   }, { once: true });
 }
 

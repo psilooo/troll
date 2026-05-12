@@ -35,6 +35,33 @@ html, body {
 
 #loading.hidden { opacity: 0; pointer-events: none; }
 
+/* Eyelid blink: two black bars slide in from top and bottom on hotspot
+   click, meet in the middle (covering everything while we swap videos),
+   then retract revealing the reveal video already playing underneath.
+   Asymmetric timing — close fast (120ms ease-in), open slower (220ms
+   ease-out) — makes it read as a real blink rather than a generic wipe. */
+#eyelid-top, #eyelid-bottom {
+  position: fixed;
+  left: 0; right: 0;
+  height: 0;
+  background: #000;
+  z-index: 6;
+  pointer-events: none;
+  /* Default rule applies when .eyelids-shut is removed → eyes opening. */
+  transition: height 220ms cubic-bezier(0.16, 0.84, 0.44, 1);
+  will-change: height;
+}
+#eyelid-top    { top: 0; }
+#eyelid-bottom { bottom: 0; }
+
+/* Class added during the blink → eyes closed. Overrides the transition
+   so closing is faster and uses an accelerating curve. */
+.eyelids-shut #eyelid-top,
+.eyelids-shut #eyelid-bottom {
+  height: 50%;
+  transition: height 120ms cubic-bezier(0.55, 0, 0.55, 0.2);
+}
+
 #mobile-blocker {
   display: none;
   position: fixed;
