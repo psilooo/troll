@@ -1,0 +1,19 @@
+# Source masters — too large for static deploy, lives in Vercel Blob instead.
+videos/
+
+# Local encoder outputs — uploaded to Vercel Blob, not bundled.
+encoded/
+
+# Reference / mood-board PNGs — not used by the live site.
+images/
+
+# Project docs (specs, plans) — not for the deployed site.
+docs/
+
+# Local dev artifacts
+.DS_Store
+.env.local
+.env*.local
+node_modules/
+
+# Test harness page is fine to ship; do NOT exclude tests/.
