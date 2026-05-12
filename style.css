@@ -35,31 +35,40 @@ html, body {
 
 #loading.hidden { opacity: 0; pointer-events: none; }
 
-/* Eyelid blink: two black bars slide in from top and bottom on hotspot
-   click, meet in the middle (covering everything while we swap videos),
-   then retract revealing the reveal video already playing underneath.
-   Asymmetric timing — close fast (120ms ease-in), open slower (220ms
-   ease-out) — makes it read as a real blink rather than a generic wipe. */
-#eyelid-top, #eyelid-bottom {
+/* Eyelid blink: two SVG paths shaped like real eyelids — concave bottom
+   on the top eyelid and concave top on the bottom one, so the visible
+   opening between them is a horizontal lens (wider in the middle,
+   narrower at the corners — actual eye geometry).
+   Asymmetric timing — close 220ms ease-in, open 420ms ease-out — reads
+   as a slow, deliberate blink. */
+#eyelids {
   position: fixed;
-  left: 0; right: 0;
-  height: 0;
-  background: #000;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
   z-index: 6;
   pointer-events: none;
-  /* Default rule applies when .eyelids-shut is removed → eyes opening. */
-  transition: height 220ms cubic-bezier(0.16, 0.84, 0.44, 1);
-  will-change: height;
 }
-#eyelid-top    { top: 0; }
-#eyelid-bottom { bottom: 0; }
+#eyelid-top, #eyelid-bottom {
+  fill: #000;
+  /* Default rule applies when .eyelids-shut is removed → eyes opening. */
+  transition: d 420ms cubic-bezier(0.16, 0.84, 0.44, 1);
+  will-change: d;
+}
+/* Open state: degenerate paths collapsed to the viewport edge → invisible. */
+#eyelid-top    { d: path("M 0,0 L 100,0 L 100,0 Q 50,0 0,0 Z"); }
+#eyelid-bottom { d: path("M 0,100 L 100,100 L 100,100 Q 50,100 0,100 Z"); }
 
-/* Class added during the blink → eyes closed. Overrides the transition
-   so closing is faster and uses an accelerating curve. */
-.eyelids-shut #eyelid-top,
+/* Closed state: each eyelid extends to the middle, with a curved meeting
+   edge — concave at center (eyelid retracted up there to expose the eye)
+   and convex at the sides (eyelid descends to seal the corners). */
+.eyelids-shut #eyelid-top {
+  d: path("M 0,0 L 100,0 L 100,60 Q 50,50 0,60 Z");
+  transition: d 220ms cubic-bezier(0.55, 0, 0.55, 0.2);
+}
 .eyelids-shut #eyelid-bottom {
-  height: 50%;
-  transition: height 120ms cubic-bezier(0.55, 0, 0.55, 0.2);
+  d: path("M 0,100 L 100,100 L 100,40 Q 50,50 0,40 Z");
+  transition: d 220ms cubic-bezier(0.55, 0, 0.55, 0.2);
 }
 
 #mobile-blocker {

@@ -15,8 +15,13 @@
   <video id="reveal" muted playsinline      preload="auto"></video>
   <video id="loop"   muted playsinline loop preload="auto" autoplay></video>
   <div id="loading"></div>
-  <div id="eyelid-top"></div>
-  <div id="eyelid-bottom"></div>
+  <!-- Eyelids as SVG paths so we can shape them like real eyelids
+       (concave bottom on top eyelid, concave top on bottom eyelid) and
+       animate the `d` attribute via CSS. -->
+  <svg id="eyelids" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+    <path id="eyelid-top"/>
+    <path id="eyelid-bottom"/>
+  </svg>
   <div id="mobile-blocker">This experience is desktop only.</div>
   <script src="/main.js" type="module"></script>
 </body>

@@ -105,9 +105,9 @@ function initExperience() {
   }
 
   // Transition between videos with an eyelid blink. CSS animates the
-  // `.eyelids-shut` class — close fast (120ms), held shut briefly (50ms),
-  // open slower (220ms). While covered, swap what sits underneath.
-  const BLINK_HELD_SHUT_MS = 170; // close + held → eyes fully covered
+  // `.eyelids-shut` class — close 220ms, held shut ~100ms, open 420ms.
+  // While covered, swap what sits underneath.
+  const BLINK_HELD_SHUT_MS = 320; // close + held → eyes fully covered
 
   function startReveal() {
     state = STATE.REVEAL;
