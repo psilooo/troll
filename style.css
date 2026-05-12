@@ -88,7 +88,7 @@ html, body {
 .mobile #mobile-blocker { display: flex; }
 .mobile #loop, .mobile #reveal, .mobile #loading { display: none; }
 
-/* Trollolol retro homepage — fades in 3s after the white state.
+/* Trollolol retro homepage — fades in 1.5s after the white state.
    Layered above the videos but below the mobile blocker. */
 #trollolol-page {
   position: fixed;
@@ -102,9 +102,8 @@ html, body {
   transition: opacity 1500ms ease-in;
   display: flex;
   flex-direction: column;
-  align-items: center;
   overflow-y: auto;
-  padding: 40px 20px 20px;
+  padding: 20px;
   box-sizing: border-box;
 }
 #trollolol-page.visible {
@@ -112,12 +111,28 @@ html, body {
   pointer-events: auto;
 }
 
+/* Main block fills the remaining viewport (everything above the footer)
+   and centers its children both vertically and horizontally. */
+.trolly-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Footer sits at the bottom on its own. */
+.trolly-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .trolly-logo {
   display: block;
   width: clamp(280px, 36vw, 560px);
   height: auto;
-  margin-top: 60px;
-  margin-bottom: 60px;
+  margin-bottom: 40px;
   user-select: none;
 }
 .trolly-tagline {
@@ -169,7 +184,7 @@ html, body {
 }
 
 .trolly-directory {
-  margin-top: 80px;
+  margin-top: 60px;
   text-align: center;
 }
 .trolly-dir-link {
@@ -187,8 +202,6 @@ html, body {
 }
 
 .trolly-footer-links {
-  margin-top: auto;
-  padding-top: 80px;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;

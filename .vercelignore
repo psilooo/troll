@@ -4,10 +4,10 @@ videos/
 # Local encoder outputs — uploaded to Vercel Blob, not bundled.
 encoded/
 
-# Reference / mood-board PNGs — not used by the live site EXCEPT the
-# wordmark, which the Trollolol page references.
+# Reference / mood-board PNGs — not used by the live site. The wordmark
+# that IS used by the Trollolol page lives at `/trololol.png` in the
+# project root (not under images/).
 images/
-!images/trololol_transparent.png
 
 # Project docs (specs, plans) — not for the deployed site.
 docs/

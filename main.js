@@ -173,7 +173,7 @@ function initExperience() {
 // Trollolol page fade-in scheduling. Called after the WHITE state is fully
 // reached (either via reveal-ended + transitionend, or via the autoplay-
 // reject fallback path inside initExperience).
-const TROLLOLOL_DELAY_MS = 3000;
+const TROLLOLOL_DELAY_MS = 1500;
 function scheduleTrollololFadeIn() {
   setTimeout(() => {
     const page = document.getElementById('trollolol-page');
