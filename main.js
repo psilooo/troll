@@ -19,6 +19,16 @@ export function isInHotspot(e) {
   return Math.hypot(px - cx, py - cy) < rpx;
 }
 
+// ---------- Video sources (filled in after Blob upload) ----------
+const VIDEOS = {
+  loop:   'PASTE_LOOP_URL_HERE',
+  reveal: 'PASTE_REVEAL_URL_HERE',
+};
+
+// ---------- State machine ----------
+const STATE = { LOADING: 'LOADING', IDLE: 'IDLE', REVEAL: 'REVEAL', WHITE: 'WHITE' };
+let state = STATE.LOADING;
+
 // ---------- Mobile blocker ----------
 const isMobile = window.matchMedia('(pointer: coarse)').matches
               || window.innerWidth < 900;
@@ -29,16 +39,6 @@ if (isMobile) {
 } else {
   initExperience();
 }
-
-// ---------- Video sources (filled in after Blob upload) ----------
-const VIDEOS = {
-  loop:   'PASTE_LOOP_URL_HERE',
-  reveal: 'PASTE_REVEAL_URL_HERE',
-};
-
-// ---------- State machine ----------
-const STATE = { LOADING: 'LOADING', IDLE: 'IDLE', REVEAL: 'REVEAL', WHITE: 'WHITE' };
-let state = STATE.LOADING;
 
 function initExperience() {
   const loop    = document.getElementById('loop');
@@ -93,9 +93,11 @@ function initExperience() {
       })
       .catch(() => {
         // Autoplay blocked even for muted — skip the reveal entirely so the
-        // user doesn't get stuck on a frozen first frame.
+        // user doesn't get stuck on a frozen first frame. Hide reveal
+        // immediately (no transition) so its frozen frame can't show through
+        // the loop's fade; then fade only the loop to expose #white.
+        reveal.style.display = 'none';
         loop.style.opacity = '0';
-        reveal.style.opacity = '0';
         state = STATE.WHITE;
       });
   }
@@ -104,7 +106,7 @@ function initExperience() {
     if (state !== STATE.REVEAL) return;
     state = STATE.WHITE;
     reveal.style.opacity = '0';
-  });
+  }, { once: true });
 }
 
 function ensureReady(video, onReady) {
