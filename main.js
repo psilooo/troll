@@ -104,45 +104,64 @@ function initExperience() {
     startReveal();
   }
 
-  // Transition between videos with an eyelid blink. CSS animates the
-  // `.eyelids-shut` class — close 220ms, held shut ~100ms, open 420ms.
-  // While covered, swap what sits underneath.
-  const BLINK_HELD_SHUT_MS = 320; // close + held → eyes fully covered
+  // Transition from loop → reveal with an eyelid blink. The CSS close
+  // transition fires on `d`; we listen for `transitionend` to know FOR
+  // CERTAIN that the eyelids are fully shut, then hold an extra few frames
+  // before doing the underlying video swap. This is more robust than a
+  // fixed timeout — if a frame is dropped or the close runs slightly long,
+  // we still don't reveal anything until the eyes are actually black.
+  const HELD_SHUT_EXTRA_MS = 120;            // extra hold AFTER close completes
+  const CLOSE_FALLBACK_MS  = 380;            // if transitionend never fires
 
   function startReveal() {
     state = STATE.REVEAL;
-    document.body.classList.add('eyelids-shut');
-    setTimeout(() => {
-      // Eyes are fully closed. Hide the loop with no transition so when
-      // the eyelids retract, we see the reveal underneath, not the loop.
+    const top = document.getElementById('eyelid-top');
+
+    let swapTriggered = false;
+    const performSwap = () => {
+      // Eyes are fully closed. Hide the loop instantly so when the
+      // eyelids retract, the reveal video is what shows through.
       loop.style.transition = 'none';
       loop.style.opacity = '0';
-      reveal.play()
-        .then(() => {
-          // Reveal is playing — eyes opening in 220ms will expose it.
-        })
-        .catch(() => {
-          // Autoplay blocked even muted — hide reveal too so eyes open
-          // straight onto #white (z-index 1) rather than a frozen frame.
-          reveal.style.display = 'none';
-          state = STATE.WHITE;
-        });
+      reveal.play().catch(() => {
+        // Autoplay blocked even muted — hide reveal too so eyes open
+        // straight onto #white (z-index 1) rather than a frozen frame.
+        reveal.style.display = 'none';
+        state = STATE.WHITE;
+      });
       // Open eyelids (the default transition in CSS handles the easing).
       document.body.classList.remove('eyelids-shut');
-    }, BLINK_HELD_SHUT_MS);
+    };
+
+    const onFullyClosed = () => {
+      if (swapTriggered) return;
+      swapTriggered = true;
+      top.removeEventListener('transitionend', onTransitionEnd);
+      clearTimeout(fallback);
+      // Hold the closed state for a few extra frames before the swap.
+      setTimeout(performSwap, HELD_SHUT_EXTRA_MS);
+    };
+
+    const onTransitionEnd = (e) => {
+      if (e.propertyName === 'd') onFullyClosed();
+    };
+
+    top.addEventListener('transitionend', onTransitionEnd);
+    // Fallback in case transitionend never fires (e.g. older Firefox that
+    // doesn't yet animate the `d` property — the eyelid will still snap
+    // shut via CSS, just without a tween).
+    const fallback = setTimeout(onFullyClosed, CLOSE_FALLBACK_MS);
+
+    document.body.classList.add('eyelids-shut');
   }
 
-  // End of reveal → WHITE. Also a blink, for visual cohesion with the
-  // click transition: close eyelids, hide reveal underneath, open onto #white.
+  // End of reveal → WHITE. No blink here — just fade the reveal video out
+  // so the white background underneath comes through. The blink is only
+  // for the loop→reveal swap.
   reveal.addEventListener('ended', () => {
     if (state !== STATE.REVEAL) return;
     state = STATE.WHITE;
-    document.body.classList.add('eyelids-shut');
-    setTimeout(() => {
-      reveal.style.transition = 'none';
-      reveal.style.opacity = '0';
-      document.body.classList.remove('eyelids-shut');
-    }, BLINK_HELD_SHUT_MS);
+    reveal.style.opacity = '0';
   }, { once: true });
 }
 
