@@ -21,8 +21,8 @@ export function isInHotspot(e) {
 
 // ---------- Video sources (filled in after Blob upload) ----------
 const VIDEOS = {
-  loop:   'PASTE_LOOP_URL_HERE',
-  reveal: 'PASTE_REVEAL_URL_HERE',
+  loop:   'https://yzlkzb7bwjoetqbb.public.blob.vercel-storage.com/looper-e76tcC19whWXEAuR1iTs4Qi07mfl8u.mp4',
+  reveal: 'https://yzlkzb7bwjoetqbb.public.blob.vercel-storage.com/on_click-1xEvlRH8KSmsmQnmLsDO6TjPFsyglN.mp4',
 };
 
 // ---------- State machine ----------
