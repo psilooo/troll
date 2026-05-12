@@ -2,7 +2,7 @@
 // the encoded 1920×1080 loop video; values then work at any viewport aspect ratio.
 export const VIDEO_W = 1920;
 export const VIDEO_H = 1080;
-export const HOTSPOT = { x: 0.5, y: 0.5, r: 0.08 }; // calibration placeholder
+export const HOTSPOT = { x: 0.50, y: 0.22, r: 0.10 }; // centered on the trollface mask in the loop
 
 // Map a screen-pixel pointer event back to video-pixel coords by inverting the
 // object-fit: cover transform, then do a circular hit-test in video pixels.
