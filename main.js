@@ -30,7 +30,84 @@ if (isMobile) {
   initExperience();
 }
 
+// ---------- Video sources (filled in after Blob upload) ----------
+const VIDEOS = {
+  loop:   'PASTE_LOOP_URL_HERE',
+  reveal: 'PASTE_REVEAL_URL_HERE',
+};
+
+// ---------- State machine ----------
+const STATE = { LOADING: 'LOADING', IDLE: 'IDLE', REVEAL: 'REVEAL', WHITE: 'WHITE' };
+let state = STATE.LOADING;
+
 function initExperience() {
-  // Filled in by later tasks.
-  console.log('[troll] desktop init');
+  const loop    = document.getElementById('loop');
+  const reveal  = document.getElementById('reveal');
+  const loading = document.getElementById('loading');
+
+  // Defensive: when imported from a test harness page that lacks these DOM
+  // elements, bail without setting anything up. This keeps tests/hotspot.html
+  // working without modification.
+  if (!loop || !reveal || !loading) return;
+
+  // Set sources in JS so the mobile path never preloads bytes.
+  loop.src   = VIDEOS.loop;
+  reveal.src = VIDEOS.reveal;
+
+  // The <video autoplay> attribute will fire play() too; calling it here
+  // explicitly lets us catch the Promise. If muted-autoplay is blocked the
+  // user sees a frozen first frame — acceptable since the hotspot still works.
+  loop.play().catch(() => { /* frozen first frame is acceptable */ });
+
+  // canplaythrough may have already fired if the resource was cached, so check
+  // readyState and either fire the handler immediately or wait for the event.
+  let loopReady = false, revealReady = false;
+  ensureReady(loop,   () => { loopReady   = true; onLoopReady(); maybeBindHotspot(); });
+  ensureReady(reveal, () => { revealReady = true;                maybeBindHotspot(); });
+
+  function onLoopReady() {
+    loading.classList.add('hidden');
+    setTimeout(() => { loading.style.display = 'none'; }, 250);
+    state = STATE.IDLE;
+  }
+
+  function maybeBindHotspot() {
+    if (loopReady && revealReady && state === STATE.IDLE) {
+      document.body.addEventListener('pointerdown', handlePointerDown);
+    }
+  }
+
+  function handlePointerDown(e) {
+    if (state !== STATE.IDLE) return;
+    if (!isInHotspot(e)) return;
+    document.body.removeEventListener('pointerdown', handlePointerDown);
+    startReveal();
+  }
+
+  function startReveal() {
+    state = STATE.REVEAL;
+    reveal.play()
+      .then(() => {
+        // Normal path: fade the loop out, reveal plays underneath.
+        loop.style.opacity = '0';
+      })
+      .catch(() => {
+        // Autoplay blocked even for muted — skip the reveal entirely so the
+        // user doesn't get stuck on a frozen first frame.
+        loop.style.opacity = '0';
+        reveal.style.opacity = '0';
+        state = STATE.WHITE;
+      });
+  }
+
+  reveal.addEventListener('ended', () => {
+    if (state !== STATE.REVEAL) return;
+    state = STATE.WHITE;
+    reveal.style.opacity = '0';
+  });
+}
+
+function ensureReady(video, onReady) {
+  if (video.readyState >= 4) { onReady(); return; }
+  video.addEventListener('canplaythrough', onReady, { once: true });
 }
