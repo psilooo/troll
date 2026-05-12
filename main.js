@@ -18,3 +18,19 @@ export function isInHotspot(e) {
   const rpx = HOTSPOT.r * VIDEO_W;
   return Math.hypot(px - cx, py - cy) < rpx;
 }
+
+// ---------- Mobile blocker ----------
+const isMobile = window.matchMedia('(pointer: coarse)').matches
+              || window.innerWidth < 900;
+
+if (isMobile) {
+  document.body.classList.add('mobile');
+  // Don't load any video. The mobile blocker is shown by CSS.
+} else {
+  initExperience();
+}
+
+function initExperience() {
+  // Filled in by later tasks.
+  console.log('[troll] desktop init');
+}
