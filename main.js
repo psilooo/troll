@@ -128,6 +128,8 @@ function initExperience() {
         // straight onto #white (z-index 1) rather than a frozen frame.
         reveal.style.display = 'none';
         state = STATE.WHITE;
+        // Same trollolol fade-in schedule as the normal end path.
+        scheduleTrollololFadeIn();
       });
       // Open eyelids (the default transition in CSS handles the easing).
       document.body.classList.remove('eyelids-shut');
@@ -162,7 +164,23 @@ function initExperience() {
     if (state !== STATE.REVEAL) return;
     state = STATE.WHITE;
     reveal.style.opacity = '0';
+    // Once the reveal has fully faded to invisible, hold pure white for a
+    // beat, then fade the Trollolol page in over the white background.
+    reveal.addEventListener('transitionend', scheduleTrollololFadeIn, { once: true });
   }, { once: true });
+}
+
+// Trollolol page fade-in scheduling. Called after the WHITE state is fully
+// reached (either via reveal-ended + transitionend, or via the autoplay-
+// reject fallback path inside initExperience).
+const TROLLOLOL_DELAY_MS = 3000;
+function scheduleTrollololFadeIn() {
+  setTimeout(() => {
+    const page = document.getElementById('trollolol-page');
+    if (!page) return;
+    page.classList.add('visible');
+    page.setAttribute('aria-hidden', 'false');
+  }, TROLLOLOL_DELAY_MS);
 }
 
 function ensureReady(video, onReady) {
