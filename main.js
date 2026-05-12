@@ -1,11 +1,14 @@
 // Hotspot is anchored to the video content (not the viewport). Calibrate against
 // the encoded 1920×1080 loop video; values then work at any viewport aspect ratio.
+// Shape is an axis-aligned rectangle in normalized video coords:
+//   x,y = top-left corner (fractions of video w/h)
+//   w,h = width/height   (fractions of video w/h)
 export const VIDEO_W = 1920;
 export const VIDEO_H = 1080;
-export const HOTSPOT = { x: 0.50, y: 0.22, r: 0.10 }; // centered on the trollface mask in the loop
+export const HOTSPOT = { x: 0.34, y: 0.12, w: 0.31, h: 0.22 }; // the lit monitor in the loop
 
 // Map a screen-pixel pointer event back to video-pixel coords by inverting the
-// object-fit: cover transform, then do a circular hit-test in video pixels.
+// object-fit: cover transform, then do a rectangular hit-test in video pixels.
 export function isInHotspot(e) {
   const vw = window.innerWidth, vh = window.innerHeight;
   const scale = Math.max(vw / VIDEO_W, vh / VIDEO_H);
@@ -13,10 +16,11 @@ export function isInHotspot(e) {
   const ox = (sw - vw) / 2, oy = (sh - vh) / 2;
   const px = (e.clientX + ox) / scale;
   const py = (e.clientY + oy) / scale;
-  const cx = HOTSPOT.x * VIDEO_W;
-  const cy = HOTSPOT.y * VIDEO_H;
-  const rpx = HOTSPOT.r * VIDEO_W;
-  return Math.hypot(px - cx, py - cy) < rpx;
+  const x1 = HOTSPOT.x * VIDEO_W;
+  const y1 = HOTSPOT.y * VIDEO_H;
+  const x2 = (HOTSPOT.x + HOTSPOT.w) * VIDEO_W;
+  const y2 = (HOTSPOT.y + HOTSPOT.h) * VIDEO_H;
+  return px >= x1 && px <= x2 && py >= y1 && py <= y2;
 }
 
 // ---------- Video sources (filled in after Blob upload) ----------
@@ -74,6 +78,20 @@ function initExperience() {
   function maybeBindHotspot() {
     if (loopReady && revealReady && state === STATE.IDLE) {
       document.body.addEventListener('pointerdown', handlePointerDown);
+      document.body.addEventListener('pointermove', handlePointerMove);
+    }
+  }
+
+  // Flip the cursor to pointer when the user hovers over the invisible
+  // hotspot. Tracked as a boolean so we only mutate the style on transitions
+  // rather than every pointermove (which fires dozens of times per second).
+  let cursorIsPointer = false;
+  function handlePointerMove(e) {
+    if (state !== STATE.IDLE) return;
+    const inside = isInHotspot(e);
+    if (inside !== cursorIsPointer) {
+      document.body.style.cursor = inside ? 'pointer' : '';
+      cursorIsPointer = inside;
     }
   }
 
@@ -81,6 +99,8 @@ function initExperience() {
     if (state !== STATE.IDLE) return;
     if (!isInHotspot(e)) return;
     document.body.removeEventListener('pointerdown', handlePointerDown);
+    document.body.removeEventListener('pointermove', handlePointerMove);
+    document.body.style.cursor = '';
     startReveal();
   }
 

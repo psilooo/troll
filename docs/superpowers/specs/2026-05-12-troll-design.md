@@ -8,7 +8,7 @@
 A single-page web experience that:
 
 1. Autoplays a silent, seamlessly looping video as a full-bleed backdrop.
-2. Listens for a click on an invisible circular hotspot at a configurable spot in the viewport.
+2. Listens for a click on an invisible rectangular hotspot at a configurable spot in the viewport. The cursor flips to `pointer` while hovering over the hotspot, otherwise stays default.
 3. On hotspot click, crossfades to a second video that plays once through.
 4. When the second video ends, fades to a pure white screen and stays there indefinitely.
 5. On mobile, replaces everything with a "desktop only" message.
@@ -185,21 +185,21 @@ LOADING ──loop canplaythrough──▶ IDLE ──hotspot click──▶ REV
 Transitions:
 
 - **LOADING → IDLE**: when `#loop` fires `canplaythrough`. Remove `#loading` overlay. Bind hotspot handler only after `#reveal` also reports `canplaythrough` (in practice this races but loop almost always finishes first).
-- **IDLE → REVEAL**: on `pointerdown` inside the hotspot circle. Call `reveal.play()` — which returns a Promise. On success, transition `#loop` opacity 1 → 0 over 500ms ease-out, revealing `#reveal` playing underneath. Unbind the pointer handler so further clicks are no-ops. On rejection (rare: some Firefox configs or managed Chrome can block even muted autoplay), fall forward: transition `#loop` AND `#reveal` opacity to 0 simultaneously, going straight to WHITE without flashing the reveal's frozen first frame.
+- **IDLE → REVEAL**: on `pointerdown` inside the hotspot rectangle. Call `reveal.play()` — which returns a Promise. On success, transition `#loop` opacity 1 → 0 over 500ms ease-out, revealing `#reveal` playing underneath. Unbind the pointer handler so further clicks are no-ops. On rejection (rare: some Firefox configs or managed Chrome can block even muted autoplay), fall forward: transition `#loop` AND `#reveal` opacity to 0 simultaneously, going straight to WHITE without flashing the reveal's frozen first frame.
 - **REVEAL → WHITE**: on `#reveal`'s `ended` event. Transition `#reveal` opacity 1 → 0 over 500ms ease-out, revealing `#white` underneath. Terminal.
 
 ## Hotspot hit-test
 
 The hotspot is anchored to the **video content**, not the viewport. Because the videos render with `object-fit: cover`, the visible content shifts (cropped symmetrically) as the viewport aspect ratio changes; a viewport-anchored hotspot would drift off the intended spot at non-16:9 viewports. Video-anchored coords let us calibrate once and have it land correctly everywhere.
 
-`HOTSPOT.x` and `HOTSPOT.y` are normalized coordinates in the intrinsic video frame (0..1). `HOTSPOT.r` is a normalized radius as a fraction of video width.
+The hotspot is an axis-aligned rectangle. `HOTSPOT.x` and `HOTSPOT.y` are the top-left corner; `HOTSPOT.w` and `HOTSPOT.h` are the dimensions — all in normalized coordinates of the intrinsic 1920×1080 video frame.
 
 ```js
 const VIDEO_W = 1920, VIDEO_H = 1080;
-const HOTSPOT = { x: 0.5, y: 0.5, r: 0.08 }; // fractions of the 1920×1080 frame
+const HOTSPOT = { x: 0.34, y: 0.12, w: 0.31, h: 0.22 }; // the lit monitor
 ```
 
-Hit test on `pointerdown` — invert the cover transform to map screen pixels back to video pixels:
+Hit test on `pointerdown` (and the same predicate drives the cursor flip on `pointermove`) — invert the cover transform to map screen pixels back to video pixels, then bounds-check the rectangle:
 
 ```js
 function isInHotspot(e) {
@@ -212,15 +212,18 @@ function isInHotspot(e) {
   // Click in video-pixel coords
   const px = (e.clientX + ox) / scale;
   const py = (e.clientY + oy) / scale;
-  // Hotspot center and radius in video pixels
-  const cx = HOTSPOT.x * VIDEO_W;
-  const cy = HOTSPOT.y * VIDEO_H;
-  const rpx = HOTSPOT.r * VIDEO_W;
-  return Math.hypot(px - cx, py - cy) < rpx;
+  // Rect bounds in video pixels
+  const x1 = HOTSPOT.x * VIDEO_W;
+  const y1 = HOTSPOT.y * VIDEO_H;
+  const x2 = (HOTSPOT.x + HOTSPOT.w) * VIDEO_W;
+  const y2 = (HOTSPOT.y + HOTSPOT.h) * VIDEO_H;
+  return px >= x1 && px <= x2 && py >= y1 && py <= y2;
 }
 ```
 
-Calibrate `HOTSPOT.x/y/r` once against the encoded 1920×1080 loop video; values then work at any viewport aspect ratio.
+Calibrate `HOTSPOT.x/y/w/h` once against the encoded 1920×1080 loop video; values then work at any viewport aspect ratio.
+
+The same `isInHotspot()` predicate also runs on `pointermove` to toggle `document.body.style.cursor` between `'pointer'` (when inside the hotspot in IDLE state) and `''` (default). The toggle is gated on a `cursorIsPointer` boolean so we only mutate the style on transitions, not every move event.
 
 ## Mobile blocker
 
@@ -264,7 +267,7 @@ CSS rules live in the styling contract above. Triggers on touch-primary devices 
 Success criteria, in order:
 
 1. **Local static load**: `vercel dev` serves `index.html` and the loop video starts playing within ~2s on a fast connection. No console errors.
-2. **Hotspot precision**: clicking inside the configured circle triggers the crossfade. Clicking outside (top corners, edges) does nothing.
+2. **Hotspot precision**: clicking inside the configured rectangle triggers the crossfade. Clicking outside (top corners, edges) does nothing. The cursor changes to `pointer` while hovering inside.
 3. **Hotspot stability across aspect ratios**: with the same `HOTSPOT` constant, the hit lands on the same visible video feature at 1920×1080 (16:9), 2560×1080 (21:9 ultrawide), and 1366×768 (~16:9 laptop). Resize the browser window during verification.
 4. **Crossfade quality**: no flash of black, no frozen frame, no audible click. Loop → reveal transition is smooth at 60fps.
 5. **End state**: when the reveal video fires `ended`, the screen fades to pure white in 500ms. No further interaction is possible.
